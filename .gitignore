@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# Project specific logs and state
+execution_log.txt
+deals_log.txt
+seen.json
+last_response.json
+
+# IDEs
+.idea/
+.vscode/
+
+# Configuration (contains personalized URL)
+config.json
