@@ -2,7 +2,7 @@
   "fare_finder_url": "https://www.wizzair.com/en-gb/flights/fare-finder/telaviv/anywhere/0/0/0/1/0/0/2026-06-03/2026-06-30?flexible=anytime&duration=1_week",
   "home_station": "TLV",
   "match_mode": "both_legs",
-  "max_price": 30,
+  "max_price": 50,
   "currency": "EUR",
   "use_club_price": false,
   "headless": true,
