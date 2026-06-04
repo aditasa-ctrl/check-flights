@@ -23,9 +23,13 @@ Setup (one time):
 import argparse
 import json
 import os
+import smtplib
+import ssl
 import subprocess
 import time
 from datetime import datetime, timedelta
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(HERE, "config.json")
@@ -45,6 +49,11 @@ DEFAULT_CONFIG = {
     "renotify_after_hours": 12,
     "open_browser_on_click": True,
     "notify_method": "auto",
+    "email_smtp_server": "smtp.gmail.com",
+    "email_smtp_port": 465,
+    "email_sender": "",
+    "email_password": "",
+    "email_receiver": "",
 }
 
 
@@ -339,8 +348,50 @@ def _popup_messagebox(title, msg):
     ctypes.windll.user32.MessageBoxW(0, msg, title, 0x40 | 0x1000)
 
 
-def notify(title, msg, url=None, open_browser=True, method="auto"):
+def _send_email(cfg, title, msg):
+    sender = cfg.get("email_sender")
+    password = cfg.get("email_password")
+    receiver = cfg.get("email_receiver")
+    server_addr = cfg.get("email_smtp_server")
+    port = cfg.get("email_smtp_port")
+
+    if not all([sender, password, receiver, server_addr, port]):
+        log("Email notification failed: Missing email configuration in config.json")
+        return
+
+    message = MIMEMultipart()
+    message["From"] = sender
+    message["To"] = receiver
+    message["Subject"] = title
+    message.attach(MIMEText(msg, "plain"))
+
+    context = ssl.create_default_context()
+    try:
+        if port == 465:
+            with smtplib.SMTP_SSL(server_addr, port, context=context) as server:
+                server.login(sender, password)
+                server.sendmail(sender, receiver, message.as_string())
+        else:
+            with smtplib.SMTP(server_addr, port) as server:
+                server.starttls(context=context)
+                server.login(sender, password)
+                server.sendmail(sender, receiver, message.as_string())
+        log(f"Email sent successfully to {receiver}")
+    except smtplib.SMTPAuthenticationError:
+        log("Email notification failed: Authentication error (535).")
+        log("TIP: For Gmail, you MUST use an 'App Password', not your regular password.")
+        log("Ensure 2-Step Verification is ON in your Google Account.")
+    except Exception as e:
+        log(f"Failed to send email: {e}")
+
+
+def notify(cfg, title, msg, url=None, open_browser=True):
+    method = cfg.get("notify_method", "auto")
     _append_deal_log(title, msg)
+
+    if method == "email":
+        _send_email(cfg, title, msg)
+        return
 
     if method == "popup":
         try:
@@ -430,9 +481,8 @@ def run_once(cfg, debug=False):
             f"Round-trip total: {d['total']:.2f} {cur}",
         ])
         log("ALERT -> " + title)
-        notify(title, msg, url=cfg.get("fare_finder_url"),
-               open_browser=cfg.get("open_browser_on_click", True),
-               method=cfg.get("notify_method", "auto"))
+        notify(cfg, title, msg, url=cfg.get("fare_finder_url"),
+               open_browser=cfg.get("open_browser_on_click", True))
         seen[signature(d)] = datetime.now().isoformat()
 
     save_seen(seen)
@@ -450,13 +500,12 @@ def main():
 
     if args.testnotify:
         log("Sending a test notification...")
-        notify("Wizz Watch test",
-               "If you can see this popup, notifications work. \n"
+        notify(cfg, "Wizz Watch test",
+               "If you can see this, notifications work. \n"
                "Real alerts will look like this.",
                url=cfg.get("fare_finder_url"),
-               open_browser=cfg.get("open_browser_on_click", True),
-               method=cfg.get("notify_method", "auto"))
-        log("Done. If nothing appeared, set \"notify_method\": \"popup\" in config.json.")
+               open_browser=cfg.get("open_browser_on_click", True))
+        log("Done.")
         return
 
     log(f"Config: {cfg.get('match_mode')} <= {cfg['max_price']} {cfg['currency']}, "

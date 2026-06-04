@@ -65,6 +65,20 @@ leave the script running.)
   set this to false (a browser window will flash open each check).
 - `interval_minutes` — used by `--loop` mode.
 - `renotify_after_hours` — don't re-alert the same deal within this many hours.
+- `notify_method` — "auto" (standard Windows notifications), "popup" (modal message box), or "email".
+- `email_smtp_server` — your SMTP server (e.g., smtp.gmail.com).
+- `email_smtp_port` — 465 (SSL) or 587 (STARTTLS).
+- `email_sender` — your email address.
+- `email_password` — your email **App Password**.
+- `email_receiver` — where to send the alerts.
+
+### How to get a Gmail App Password:
+1. Go to your [Google Account](https://myaccount.google.com/).
+2. Select **Security**.
+3. Under "How you sign in to Google," make sure **2-Step Verification** is turned on.
+4. Search for **App Passwords** in the search bar at the top or go to the 2-Step Verification settings and scroll to the bottom.
+5. Create a new App Password (name it "Wizz Watch").
+6. Copy the **16-character code** and paste it into `config.json` as your `email_password`.
 
 ## If it stops finding anything
 Wizzair occasionally changes its anti-bot setup or page layout. If captures start
