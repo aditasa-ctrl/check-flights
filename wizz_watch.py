@@ -454,7 +454,7 @@ def run_once(cfg, debug=False):
         if mode == "total":
             return t["total"] < threshold
         if mode == "per_leg":
-            return (t["out_price"] < threshold or t["ret_price"] < threshold) and t["dest"] !== "LCA"
+            return (t["out_price"] < threshold or t["ret_price"] < threshold) and t["dest"] != "LCA"
         return t["out_price"] < threshold and t["ret_price"] < threshold
 
     deals = sorted([t for t in trips if qualifies(t)], key=lambda t: t["total"])
