@@ -454,11 +454,18 @@ def run_once(cfg, debug=False):
         if mode == "total":
             return t["total"] < threshold
         if mode == "per_leg":
-            return (t["out_price"] < threshold or t["ret_price"] < threshold) and t["dest"] != "LCA"
+            return t["out_price"] < threshold or t["ret_price"] < threshold
         return t["out_price"] < threshold and t["ret_price"] < threshold
+      
+  EXCLUDED_DESTINATIONS = {"LCA", "CTA"}
 
-    deals = sorted([t for t in trips if qualifies(t)], key=lambda t: t["total"])
-
+  deals = sorted(
+    [
+        t for t in trips
+        if qualifies(t) and t["dest"] not in EXCLUDED_DESTINATIONS
+    ],
+    key=lambda t: t["total"]
+)
     if not deals:
         log(f"No round trips matching '{mode}' under {threshold} {want_currency} "
             f"(checked {len(trips)} destinations with both legs).")
